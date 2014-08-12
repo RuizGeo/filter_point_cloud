@@ -44,6 +44,9 @@ kmeans.fit(dados)
 labels = kmeans.labels_
 #shapefile memoryCache# create layer
 vl = QgsVectorLayer("Point", "temporary_points", "memory")
+#Iniciar edicao vetor
+vl.startEditing()
+#acessar provedor 
 pr = vl.dataProvider()
 print labels
 print dados
@@ -59,8 +62,9 @@ for i in range((len(coordenadas)-1)):
     fet.setAttributes([int(labels[i]),int(i)])
     pr.addFeatures([fet])
 
-vl.updateExtents()
-    
+    vl.updateExtents()
+#Emviar mudancas
+vl.commitChanges()
 QgsMapLayerRegistry.instance().addMapLayer(vl)
 fim = time.time()
 print "Tempo: ", (fim - ini)/60,' minutos'
