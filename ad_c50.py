@@ -10,8 +10,13 @@ import rpy2.robjects as robjects
 r = robjects.r
 
 from rpy2.robjects.packages import importr
-c50 = importr('C50')
-
+#Try import C50, if error install package
+try:
+     c50 = importr('C50')
+except:
+     
+     utils = importr('utils')
+     utils.install_packages('C50')
 #Ler a tabela do shapefile em DBF com R
 
 #Criar a arvore de decisao na linguagem R
