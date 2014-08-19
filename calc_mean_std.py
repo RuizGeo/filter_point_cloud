@@ -43,8 +43,12 @@ for i, feat in enumerate (features):
 np.save(file_temp, np.asarray(dados))
 np.save(file_temp, np.asarray(mean_std))
 file_temp.close()
+#Clear memory
 del(dados)
 del(mean_std)
+del(layer)
+del(pathSHP)
+del(shapefile)
 #Leitura do arquivo numpy
 file_temp = file("tmp.bin","rb")
 data = np.load(file_temp)
