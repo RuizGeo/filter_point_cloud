@@ -34,7 +34,12 @@ uso= r("nomes[1]")
 o =[]
 o.append(uso[0])
 print o
+'''
+estrutura dados
+res = robjects.FactorVector(d[0,:])
+c50.C5_0()
 
+'''
 r("library(C50)")
 
 r("oneTree<-C5.0(training,classes, control=(C5.0Control(minCases = 40, CF = 0.8)))")
