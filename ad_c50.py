@@ -17,6 +17,7 @@ except:
      
      utils = importr('utils')
      utils.install_packages('C50')
+     c50 = importr('C50')
 #Ler a tabela do shapefile em DBF com R
 
 #Criar a arvore de decisao na linguagem R
