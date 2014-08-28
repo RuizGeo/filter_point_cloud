@@ -164,7 +164,7 @@ z = data[:,0]
 r = data[:,1]
 g = data[:,2]
 b = data[:,3]
-cond_eval=eval(cond)
+cond_eval = eval(cond)
 
 #selecionar no array apenas os valores com classe igual a 1
 id_selec = array_id[np.where(cond_eval)]
@@ -180,12 +180,12 @@ shapefile = ogr.Open(str(pathSHP[0]))
 #Obter layer
 layerOGR = shapefile.GetLayer()
 
-for id in id_selec:
-    featureOGR = layerOGR.GetFeature(int(id))
+for i in id_selec:
+    featureOGR = layerOGR.GetFeature(int(i))
     #Ainserir na lista os valores dos atributos
     dict_values = featureOGR.items()
     #Obter Z
-    z_id_selec = layerOGR.GetFeature(int(id)).GetField("z")
+    z_id_selec = layerOGR.GetFeature(int(i)).GetField("z")
     #Selecionar com buffer
     layerOGR.SetSpatialFilter(featureOGR.GetGeometryRef().Buffer(1))
     d=[layerOGR.GetFeature(j).GetField("z") for j in xrange(layerOGR.GetFeatureCount())]
