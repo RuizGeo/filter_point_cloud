@@ -164,7 +164,7 @@ z = data[:,0]
 r = data[:,1]
 g = data[:,2]
 b = data[:,3]
-cond_eval = eval(cond)
+cond_eval=eval(cond)
 
 #selecionar no array apenas os valores com classe igual a 1
 id_selec = array_id[np.where(cond_eval)]
@@ -179,9 +179,49 @@ pathSHP = pathSHP.split('|')
 shapefile = ogr.Open(str(pathSHP[0]))
 #Obter layer
 layerOGR = shapefile.GetLayer()
-
+# create layer temporary
+vl = QgsVectorLayer("Point", "temporary_points", "memory")
+vl.startEditing()
+pr = vl.dataProvider()
+# add fields
+pr.addAttributes( [ QgsField("z", QVariant.Double) ] )
+peso_stedv=1
 for i in id_selec:
     featureOGR = layerOGR.GetFeature(int(i))
+    geom = featureOGR.GetGeometryRef()
+    #Ainserir na lista os valores dos atributos
+    dict_values = featureOGR.items()
+    #Obter Z
+    z_id_selec = layerOGR.GetFeature(int(i)).GetField("z")
+    #print round(mean, 3),' - ',round(stedv, 3), ' - ',id
+    #mean_std.append([round(mean, 3),round(stedv, 3)])
+    #Insery dados no shape temporary
+    # add a feature
+    fet = QgsFeature()
+    fet.setGeometry( QgsGeometry.fromPoint(QgsPoint(geom.GetPoint()[0],geom.GetPoint()[1])) )
+    fet.setAttributes([z_id_selec])
+    pr.addFeatures([fet])
+
+    # update layer's extent when new features have been added
+    # because change of extent in provider is not propagated to the layer
+    vl.updateExtents()
+
+
+#Lista IDs delete
+l_del=[]
+# get the driver
+driver = ogr.GetDriverByName('ESRI Shapefile')
+#Obter caminho shape
+pathSHP = pr.dataSourceUri()
+pathSHP = pathSHP.split('|')
+print pathSHP[0]
+#Ler layer OGR
+shapefile = ogr.Open(str(pathSHP[0]))
+#Obter layer
+layerOGR = shapefile.GetLayer()
+for i in id_selec:
+    featureOGR = layerOGR.GetFeature(int(i))
+    geom = featureOGR.GetGeometryRef()
     #Ainserir na lista os valores dos atributos
     dict_values = featureOGR.items()
     #Obter Z
@@ -192,7 +232,15 @@ for i in id_selec:
     d = np.asarray(d)
     mean = d.sum()/len(d)
     stedv = d.std(ddof=1)
-    #print round(mean, 3),' - ',round(stedv, 3), ' - ',id
-    mean_std.append([round(mean, 3),round(stedv, 3)])
+    stedv = abs(stedv)
+    desvio = stedv * peso_stedv
+    if z_id_selec > (mean - desvio) and z_id_selec < (mean + desvio):
+        pass
+    else:
+        l_del.append(i)
+print l_del
+vl.commitChanges()
+QgsMapLayerRegistry.instance().addMapLayer(vl)
+    
 fim = time.time()
 print 'Tempo minutos: ',(fim - ini)/60
