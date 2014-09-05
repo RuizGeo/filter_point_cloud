@@ -23,6 +23,8 @@ layer_sample = allLayers[0]
 layer_points_clould = allLayers[1]
 #Iterando sobre a geometria
 features_samples = layer_sample.getFeatures()
+#Obter provedor
+provider_pints_clould=layer_points_clould.dataProvider()
 features_point_clould = layer_points_clould.getFeatures()
 training=[]
 classes=[]
@@ -47,19 +49,34 @@ idx_z_pc = layer_points_clould.fieldNameIndex('z')
 idx_r_pc = layer_points_clould.fieldNameIndex('r')
 idx_g_pc = layer_points_clould.fieldNameIndex('g')
 idx_b_pc = layer_points_clould.fieldNameIndex('b')
+
+# create layer temporary
+vl = QgsVectorLayer("Point?crs=EPSG:32722", "temporary_points", "memory")
+vl.startEditing()
+pr = vl.dataProvider()
 for feat_pc in features_point_clould:
     #Obter valores atributos
     attrs = feat_pc.attributes()
+    #Obter geometria
+    geom = feat_pc.geometry()
     
+    #Obter valores da tabela
+    attrs_registro=[round(attrs[idx_z_pc],2),attrs[idx_r_pc],attrs[idx_g_pc],attrs[idx_b_pc]]
     #obter IDs como List
     array_id.append(feat_pc.id())
     #criar array para os valores z,r,g e b
-    data.append([round(attrs[idx_z_pc],2),attrs[idx_r_pc],attrs[idx_g_pc],attrs[idx_b_pc]])
+    data.append(attrs_registro)
+    fet = QgsFeature()
+    fet.setGeometry( QgsGeometry.fromPoint(geom.asPoint() ))
+    fet.setAttributes(attrs_registro)
+    pr.addFeatures([fet])
+    vl.updateExtents()
 #Guardar dados em arquivo bin
 np.save(file_temp, np.asarray(training))
 np.save(file_temp, np.asarray(array_id))
 np.save(file_temp, np.asarray(data))
 file_temp.close()
+print "Data: ", data[-1]
 #Clear memory
 del(data)
 del(training)
@@ -71,12 +88,13 @@ file_temp = file("tmp.bin","rb")
 training = np.load(file_temp)
 
 
-#print "Data: ", data[-1]," - ","Mean_std: ",mean_std[-1], "d: ",d
+
 #Acessar valores de cada varivavel no array
 z_train=training[:,0]
 r_train=training[:,1]
 g_train=training[:,2]
 b_train=training[:,3]
+print len(z_train)
 #Decision tree
 clas = robjects.FactorVector(classes)
 dict_data={'z':robjects.FloatVector(z_train),'r':robjects.IntVector(r_train),'g':robjects.IntVector(g_train),'b':robjects.IntVector(b_train)}
@@ -179,34 +197,8 @@ pathSHP = pathSHP.split('|')
 shapefile = ogr.Open(str(pathSHP[0]))
 #Obter layer
 layerOGR = shapefile.GetLayer()
-# create layer temporary
-vl = QgsVectorLayer("Point", "temporary_points", "memory")
-vl.startEditing()
-pr = vl.dataProvider()
-# add fields
-pr.addAttributes( [ QgsField("z", QVariant.Double) ] )
+
 peso_stedv=1
-for i in id_selec:
-    featureOGR = layerOGR.GetFeature(int(i))
-    geom = featureOGR.GetGeometryRef()
-    #Ainserir na lista os valores dos atributos
-    dict_values = featureOGR.items()
-    #Obter Z
-    z_id_selec = layerOGR.GetFeature(int(i)).GetField("z")
-    #print round(mean, 3),' - ',round(stedv, 3), ' - ',id
-    #mean_std.append([round(mean, 3),round(stedv, 3)])
-    #Insery dados no shape temporary
-    # add a feature
-    fet = QgsFeature()
-    fet.setGeometry( QgsGeometry.fromPoint(QgsPoint(geom.GetPoint()[0],geom.GetPoint()[1])) )
-    fet.setAttributes([z_id_selec])
-    pr.addFeatures([fet])
-
-    # update layer's extent when new features have been added
-    # because change of extent in provider is not propagated to the layer
-    vl.updateExtents()
-
-
 #Lista IDs delete
 l_del=[]
 # get the driver
@@ -239,6 +231,9 @@ for i in id_selec:
     else:
         l_del.append(i)
 print l_del
+#deletar registro do vector memory
+pr.deleteFeatures(l_del)
+vl.updateExtents()
 vl.commitChanges()
 QgsMapLayerRegistry.instance().addMapLayer(vl)
     
