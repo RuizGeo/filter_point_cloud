@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import time
 '''##############'''
@@ -15,17 +16,23 @@ class createArraySHP:
         self.idx_field_class = idx_filed_class
         #print type(self.layer_canvas,  self.idx_fields,self.idx_filed_class)
     
-    def createArraySample(self):
+    def createSample(self):
         '''
         input shapefile points
         Creatte array from shapefile points
-        Output numpy array sample
+        Output dict {} sample
         '''
         #iniciar variaveis auxiliares
-        training=[]
         classes=[]
+        training={}
         #Iterando sobre a geometria
         layer_features = self.layer_canvas.getFeatures()
+        fields = self.layer_canvas.pendingFields()
+        #Atribuir os fields em list
+        fields_sample = [v.name () for i, v in enumerate(fields) if i in self.idx_fields]
+        #Gerar dict of training
+        for i in fields_sample:
+            training[str(i)] = []
         if self.idx_field_class != -1:
             #percorrer layer samples
             for feat in layer_features:
@@ -34,18 +41,20 @@ class createArraySHP:
                 #Criar array para as classes de amostras
                 classes.append(attrs[self.idx_field_class])
                 #criar array para os valores z,r,g e b
-                attrs_registro = [attrs[i] for i in self.idx_fields]
-                training.append(attrs_registro)
+                for i, v in enumerate(self.idx_fields):
+                    training[fields_sample[i]].append(attrs[v])
+                #attrs_registro = [attrs[i] for i in self.idx_fields]
+                #training.append(attrs_registro)
             #retorna da funcao
-            return training
+            return training, classes
 
         else:
             print 'Error create array'
             
-    def createSHPMemory (self):
+    def createSHPMemoryData (self):
             '''
             Creatte shapefile memory points
-            Return shapefile memory points numpy array data
+            Return shapefile memory points and numpy array data
             '''    
             #inicia variaveis
             data=[]
@@ -76,4 +85,7 @@ class createArraySHP:
             vl.updateExtents()
             vl.commitChanges()
             #return datas
-            return vl, data
+            return vl, np.asarray(data)
+    
+    
+    
