@@ -20,7 +20,7 @@ class createArraySHP:
         '''
         input shapefile points
         Creatte array from shapefile points
-        Output dict {} sample
+        Output QgsVector, dict {} sample, values fields (list) and array numpy with ID
         '''
         #iniciar variaveis auxiliares
         classes=[]
@@ -29,10 +29,10 @@ class createArraySHP:
         layer_features = self.layer_canvas.getFeatures()
         fields = self.layer_canvas.pendingFields()
         #Atribuir os fields em list
-        fields_sample = [v.name () for i, v in enumerate(fields) if i in self.idx_fields]
+        fields_sample = [str(v.name ()) for i, v in enumerate(fields) if i in self.idx_fields]
         #Gerar dict of training
         for i in fields_sample:
-            training[str(i)] = []
+            training[i] = []
         if self.idx_field_class != -1:
             #percorrer layer samples
             for feat in layer_features:
@@ -46,12 +46,12 @@ class createArraySHP:
                 #attrs_registro = [attrs[i] for i in self.idx_fields]
                 #training.append(attrs_registro)
             #retorna da funcao
-            return training, classes
+            return training, classes, fields_sample
 
         else:
             print 'Error create array'
             
-    def createSHPMemoryData (self):
+    def createSHPMemoryArray (self):
             '''
             Creatte shapefile memory points
             Return shapefile memory points and numpy array data
@@ -85,7 +85,7 @@ class createArraySHP:
             vl.updateExtents()
             vl.commitChanges()
             #return datas
-            return vl, np.asarray(data)
+            return vl, np.asarray(data), array_id
     
     
     
