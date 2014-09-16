@@ -25,7 +25,7 @@ class createDT:
     '''
     Create decision tree C50
     Input class (list) and trein (array numpy)
-    Output ...
+    Output conditional (string)
     '''
     def __init__(self,clas= -1, trein = -1):
         self.clas = clas
@@ -104,5 +104,5 @@ class createDT:
                         
                 else:
                    pass 
+       
         return cond
-    def 
