@@ -65,5 +65,5 @@ class filterSHP:
                 pass
             else:
                 ids_del.append(i)
-            self.layer.dataProvider().deleteFeatures(ids_del)
+        self.layer.dataProvider().deleteFeatures(ids_del)
             
