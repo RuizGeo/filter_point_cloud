@@ -61,9 +61,14 @@ class createArraySHP:
             array_id=[]
             # create layer temporary
             vl = QgsVectorLayer("Point?crs=EPSG:32722", "temporary_points", "memory")
-            vl.startEditing()
+            #Get provider
             pr = vl.dataProvider()
-            #percorrer layer 
+            #Iniciar edicao 
+            vl.startEditing()
+            #Inserir colunas
+            fields_data = self.layer_canvas.pendingFields()
+            fields_vl = [v for i, v in enumerate(fields_data) if i in [self.idx_fields]]
+            pr.addAttributes(fields_vl)
             #Iterando sobre a geometria
             layer_features = self.layer_canvas.getFeatures()
             for feat in layer_features:
@@ -85,7 +90,7 @@ class createArraySHP:
             vl.updateExtents()
             vl.commitChanges()
             #return datas
-            return vl, np.asarray(data), array_id
+            return self.layer_canvas, np.asarray(data), np.asarray(array_id)
     
     
     
