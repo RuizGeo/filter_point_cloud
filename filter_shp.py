@@ -22,6 +22,8 @@ class filterSHP:
         self.array_id = array_id
         self.layer=layer
     def deleteFeatures(self):
+        print 'self.fields: ',type(self.fields), len(self.fields)
+        print 'self.datas :',type(self.datas), self.datas.shape
         #criar as variaveis para cada atributo (coluna)
         for i, v in enumerate(self.fields):
             exec(v+'=self.datas[:,i]')
@@ -29,16 +31,22 @@ class filterSHP:
         cond_eval=eval(self.cond)
         #selecionar no array apenas os valores com classe igual a 1
         id_selec = self.array_id[np.where(cond_eval)]
+            
         #Delete features of conditional
-        self.layer.dataProvider().deleteFeatures(id_selec)
+        self.layer.dataProvider().deleteFeatures(id_selec.tolist())
+        #Guardar dados shapefile memory
+        self.layer.updateExtents()
+        self.layer.commitChanges()
     def filterNN(self):
         #Get index field Z in datas
-        fields = layer.pendingFields()
-        fields_data = [str(i.name()) for i in fields]
+        fields_layer = self.layer.pendingFields()
+        fields_data = [str(i.name()) for i in fields_layer]
+        print 'fields_data: ',fields_data
         #Get index Z in self.fields
         idx_z = self.fields.index(fields_data[self.idx_z_data])
         #Get Z values
         z=self.datas[:,idx_z]
+        print 'Z.shape: ', z.shape
         #create spatial index
         spIndex = QgsSpatialIndex()
         #Inserir features para gerar os grupos de distancias
@@ -55,8 +63,10 @@ class filterSHP:
             geom = feature.geometry()
             #Get IDs from Nearest Neighbor
             nearestIds = spIndex.nearestNeighbor(geom.asPoint(),30)
+            print 'nearestIds: ',nearestIds
             #Select values Z from IDs points
-            values_datas = z[np.asarray[nearestIds]]
+            '''tem que tentar selecionar no array_id'''
+            values_datas = z[self.array_id[np.asarray(nearestIds)]]
             mean = d.sum()/len(d)
             stedv = d.std(ddof=1)
             stedv = abs(stedv)
@@ -66,4 +76,5 @@ class filterSHP:
             else:
                 ids_del.append(i)
         self.layer.dataProvider().deleteFeatures(ids_del)
+        QgsMapLayerRegistry.instance().addMapLayer(self.layer)
             
