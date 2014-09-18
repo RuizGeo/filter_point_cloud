@@ -23,6 +23,7 @@ allLayers = canvas.layers()
 idx_layer_sample = allLayers[1]
 fields_sample = [2,3,4,5]
 idx_classes = 9
+idx_z_dados = 2
 
 
 #Layer sampl e
@@ -32,11 +33,15 @@ f = create_array_shp1.createArraySHP(idx_layer_sample,fields_sample,idx_classes)
 
 train_df, classes_ar,nomes_fields = f.createSample()
 print nomes_fields, type(nomes_fields)
-vl, dados, array_id  = f.createSHPMemoryArray()
+
+#gerar os dados 
+f_dados = create_array_shp1.createArraySHP(layer_points_clould,fields_sample)
+vl, dados, array_id  = f_dados.createSHPMemoryArray()
+
 DT =create_C50.createDT(classes_ar, train_df)
 DT.createC50()
 cond = DT.convertDTtoCond()
-filter=filter_shp.filterSHP(cond,dados,nomes_fields,array_id)
-fil = filter.selectIDs()
-print fil
 
+filt = filter_shp.filterSHP(cond,dados,nomes_fields,idx_z_dados,array_id,vl)
+filt.deleteFeatures()
+filt.filterNN()
