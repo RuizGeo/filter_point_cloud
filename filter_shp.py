@@ -66,7 +66,8 @@ class filterSHP:
             print 'nearestIds: ',nearestIds
             #Select values Z from IDs points
             '''tem que tentar selecionar no array_id'''
-            values_datas = z[self.array_id[np.asarray(nearestIds)]]
+            nearestIds_idx=[np.where(self.array_id == i) for i in nearestIds]
+            values_datas = z[np.asarray(nearestIds_idx)]
             mean = d.sum()/len(d)
             stedv = d.std(ddof=1)
             stedv = abs(stedv)
