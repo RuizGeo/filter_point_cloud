@@ -99,9 +99,9 @@ class filterPointsClould:
         dataf = robjects.DataFrame(self.trein)
         
         ad=c50.C5_0(dataf,clas,triasl=5,control=(c50.C5_0Control(minCases = 2,noGlobalPruning = True, CF = 0.8)))
-        predict= r['predict']
+        
         self.ad =(base.summary(ad))
-        print self.ad,(base.summary(clas))
+        #print self.ad,(base.summary(clas))
     
         
         #Delete variables
@@ -198,7 +198,7 @@ class filterPointsClould:
             attrs_registro=[]
             data=[]
             array_id=[]
-            datas_dict={}
+            
             print "Iniciou varia aux"
             # create layer temporary
             vl = QgsVectorLayer("Point?crs=EPSG:32722", "temporary_points", "memory")
@@ -215,9 +215,7 @@ class filterPointsClould:
             fields_names=[ f.name() for f in fields_vl]
             #Add QgsFileds in temporary file
             pr.addAttributes(fields_vl)
-            #Create dict to predict
-            for i in fields_names:
-                datas_dict[i] = []
+          
             #Iterando sobre a geometria
             layer_features = self.layer_datas.getFeatures()
             for feat in layer_features:
@@ -227,12 +225,9 @@ class filterPointsClould:
                 attrs = feat.attributes()
                 #obter IDs como List
                 array_id.append(feat.id())
-                #Insert values attributes in variables
-                for i, v in enumerate(self.idx_fields_datas):
-                    datas_dict[fields_names[i]].append(attrs[v])
-                    attrs_registro.append(attrs[i])
+         
                 #criar array para os valores z,r,g e b
-                #attrs_registro = [attrs[i] for i in self.idx_fields_datas]
+                attrs_registro = [attrs[i] for i in self.idx_fields_datas]
                 #Add attributes in data array
                 data.append(attrs_registro)
                 fet = QgsFeature()
@@ -247,12 +242,8 @@ class filterPointsClould:
             #commite changes
             vl.commitChanges()
             print "finish create points temporary"
-            #Test predict in R
-            for i in datas_dict.keys():
-                datas_dict[i]= robjects.FloatVector(datas_dict[i])
-            df_datas = robjects.DataFrame(datas_dict)
-            predict= r['predict']
-            #print predict(ad, df_datas)
+    
+            
             self.vl = vl
             self.array_datas = np.asarray(data)
             self.array_ids_datas = np.asarray(array_id)
