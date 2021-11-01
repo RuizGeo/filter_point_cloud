@@ -5,6 +5,9 @@ Created on Mon Jan  6 13:05:04 2014
 @author: ruiz
 """
 #import pandas.rpy.common as com
+import os
+import pandas as pd
+import geopandas as gpd
 #import pandas as pd
 import rpy2.robjects as robjects
 r = robjects.r
@@ -14,7 +17,7 @@ from rpy2.robjects.packages import importr
 try:
      c50 = importr('C50')
 except:
-     
+
      utils = importr('utils')
      utils.install_packages('C50')
      c50 = importr('C50')
@@ -23,7 +26,7 @@ except:
 #Criar a arvore de decisao na linguagem R
 #Converter a AD para testes condicionais
 #Aplicar os testes para a nuvem de pontos
-#Aplicar o calculo do DP para esses pontos selecionados 
+#Aplicar o calculo do DP para esses pontos selecionados
 #Criar um novo shapefile com o resultado
 r("library(foreign)")
 r("dados= read.dbf('/media/Documentos/TESTES/points_cloud/SHP/pt_amostras1.dbf.dbf')")
@@ -34,7 +37,7 @@ r("nomes = names(training)")
 uso= r("nomes[1]")
 o =[]
 o.append(uso[0])
-print o
+
 '''
 estrutura dados
 res = robjects.FactorVector(d[0,:])
@@ -52,22 +55,23 @@ strAD = str(ad)
 #Transformar AD em Lista
 listAD = strAD.split('\n')
 #Verifica os colchetes fora de lugar
-for i, v in enumerate(listAD):   
+for i, v in enumerate(listAD):
      if '{' in v and '}' not in v :
          if '{' in v and '}' not in listAD[i+1] :
              listAD[i+1] = listAD[i+1].replace(':','')
              listAD[i+2] = listAD[i+2].replace(':','')
              listAD[i] = v.strip() + listAD[i+1].strip()+ listAD[i+2].strip()
              listAD.remove(listAD[i+2])
-             listAD.remove(listAD[i+1])            
+             listAD.remove(listAD[i+1])
          else:
              listAD[i+1] = listAD[i+1].replace(':','')
              listAD[i] = v.strip() + listAD[i+1].strip()
              listAD.remove(listAD[i+1])
      else:
          pass
-     
-     
+
+
+
 #Contar o número de espaços
 #Transformar AD em Lista
 listAuxAD = strAD.split('\n')
@@ -79,10 +83,10 @@ listAuxAD = [w.replace('    ','#')for w in listAuxAD]
 numEsp = [w.count('#')for w in listAuxAD]
 del listAuxAD
 
-#Verificar a lista 
+#Verificar a lista
 for i, v in enumerate(listAD):
     p = 'USO'
-    
+
     if v.find(p) != -1:
         limiteNumEsp = numEsp[i-1]
         while limiteNumEsp <  numEsp[i]:
@@ -90,7 +94,7 @@ for i, v in enumerate(listAD):
             limiteNumEsp = numEsp[i]
         #while limiteNumEsp != numEsp[i] :
         #print v
-            
+
 #Inicio da AD
 inicioAD = listAD.index('Decision tree:')
 #inicia as variáveis
@@ -100,23 +104,23 @@ controlePrimeiraLinha = 0
 
 #Analise da AD
 for index,value in enumerate(listAD):
-    #Transforma String em Lista      
+    #Transforma String em Lista
     valueLista = value.split()
-    #remover impurezas   
-    valueLista =[i.replace(':...','') for i in valueLista]  
+    #remover impurezas
+    valueLista =[i.replace(':...','') for i in valueLista]
     valueLista =[i.replace(':','') for i in valueLista]
     valueLista =[i for i in valueLista if i != '']
     #print valueLista
     #Remove o começo da AD
-    if index < (inicioAD+2):     
+    if index < (inicioAD+2):
         pass
     #Remove o final
     elif listAD[index].find('Evaluation') != -1:
         break
-    
+
     #Transformando primeira linha
-    elif controlePrimeiraLinha == 0:    
-            #Controle da primeira linha   
+    elif controlePrimeiraLinha == 0:
+            #Controle da primeira linha
             controlePrimeiraLinha =1
             #Se tiver parenteses tiver parentese inserir 'ELSE'
             if listAD[index].find('(') != -1:
@@ -124,46 +128,46 @@ for index,value in enumerate(listAD):
             else:
                 cond = cond+'CASE WHEN '+str(valueLista[0])+str(valueLista[1])+str(valueLista[2])+' THEN '
     #Analisa as linhas que contem ":..."
-    elif listAD[index].find(':...') != -1:        
+    elif listAD[index].find(':...') != -1:
         #Analisa se há '{' e '('
-        if listAD[index].find('{') != -1 and listAD[index].find('(') != -1: 
+        if listAD[index].find('{') != -1 and listAD[index].find('(') != -1:
             aux = str(valueLista)[str(valueLista).index('{')+1:str(valueLista).index('}')]
             aux = ' '+ valueLista[0]+' = ' + aux.replace(',',' OR '+valueLista[0]+' = ')
-            cond= cond+'CASE WHEN '+aux +' THEN '+ str(valueLista[3])+ ' ELSE '           
-            
-        #Analisa se há '('   
-        elif listAD[index].find('{') != -1: 
+            cond= cond+'CASE WHEN '+aux +' THEN '+ str(valueLista[3])+ ' ELSE '
+
+        #Analisa se há '('
+        elif listAD[index].find('{') != -1:
             aux = str(valueLista)[str(valueLista).index('{')+1:str(valueLista).index('}')]
             aux = ' '+ valueLista[0]+' = ' + aux.replace(',',' OR '+valueLista[0]+' = ')
-            cond= cond+'CASE WHEN '+aux +' THEN '           
-            
+            cond= cond+'CASE WHEN '+aux +' THEN '
+
         elif listAD[index].find('(') != -1:
             cond = cond +' CASE WHEN '+ str(valueLista[0])+str(valueLista[1])+str(valueLista[2])+' THEN '+  str(valueLista[3]) + ' ELSE '
-            
+
         else:
             cond = cond +' CASE WHEN '+ str(valueLista[0])+str(valueLista[1])+str(valueLista[2])+' THEN '
-            
+
     #Analisa as linhas que não contem ":..."
     else:
         if numEsp[index] > numEsp[index+1]: numEsp[index]-numEsp[index+1]
         #Analisa se há '{' e '('
         if listAD[index].find('{') != -1 and listAD[index].find('(') != -1:
-            if listAD[index+1]== '':             
-                cond= cond +' '+str(valueLista[3])+ (' END '* (numEsp[index]-numEsp[index+1]))                
-            else:            
-                cond= cond +' '+str(valueLista[3])+ (' END '* (numEsp[index]-numEsp[index+1]))+ ' ELSE '
- 
-        elif  listAD[index].find('(') != -1: 
             if listAD[index+1]== '':
                 cond= cond +' '+str(valueLista[3])+ (' END '* (numEsp[index]-numEsp[index+1]))
-            else:  
-                cond= cond +' '+str(valueLista[3])+ (' END '* (numEsp[index]-numEsp[index+1]))+ ' ELSE '          
-                
-        else:
-           pass  
-        
+            else:
+                cond= cond +' '+str(valueLista[3])+ (' END '* (numEsp[index]-numEsp[index+1]))+ ' ELSE '
 
-    
+        elif  listAD[index].find('(') != -1:
+            if listAD[index+1]== '':
+                cond= cond +' '+str(valueLista[3])+ (' END '* (numEsp[index]-numEsp[index+1]))
+            else:
+                cond= cond +' '+str(valueLista[3])+ (' END '* (numEsp[index]-numEsp[index+1]))+ ' ELSE '
+
+        else:
+           pass
+
+
+
 
 cond = cond +' END '
 print cond
